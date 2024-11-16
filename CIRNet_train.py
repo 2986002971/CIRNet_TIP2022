@@ -12,7 +12,6 @@ from dataLoader import get_loader
 from model.CIRNet_Res50 import CIRNet_R50
 from model.CIRNet_vgg16 import CIRNet_V16
 from options import opt
-from utils import adjust_lr, clip_gradient
 
 
 def seed_torch(seed=42):
@@ -94,6 +93,9 @@ model.cuda()
 
 params = model.parameters()
 optimizer = torch.optim.Adam(params, opt.lr)
+scheduler = torch.optim.lr_scheduler.StepLR(
+    optimizer, step_size=opt.decay_epoch, gamma=opt.decay_rate
+)
 CE = torch.nn.BCEWithLogitsLoss()
 
 
@@ -115,7 +117,7 @@ def train(train_loader, model, optimizer, epoch, save_path):
             loss_rd = CE(s_rgbd, gts)
             loss = loss_r + loss_d + loss_rd
             loss.backward()
-            clip_gradient(optimizer, opt.clip)
+            torch.nn.utils.clip_grad_value_(model.parameters(), opt.clip)
             optimizer.step()
             epoch_step += 1
             loss_all += loss_rd.detach()
@@ -157,8 +159,9 @@ if __name__ == "__main__":
     print("Start train...")
     time_begin = time.time()
     for epoch in range(1, opt.epoch + 1):
-        cur_lr = adjust_lr(optimizer, opt.lr, epoch, opt.decay_rate, opt.decay_epoch)
+        cur_lr = scheduler.get_last_lr()[0]
         writer.add_scalar("learning-rate", cur_lr, global_step=epoch)
         train(train_loader, model, optimizer, epoch, save_path)
+        scheduler.step()
         time_epoch = time.time()
         print("Time out:{:2f}s\n".format(time_epoch - time_begin))
