@@ -1,15 +1,14 @@
-import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 
-model_urls = {
-    "resnet50": "https://download.pytorch.org/models/resnet50-19c8e357.pth"
-}
+model_urls = {"resnet50": "https://download.pytorch.org/models/resnet50-19c8e357.pth"}
 
 
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
-    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False)
+    return nn.Conv2d(
+        in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False
+    )
 
 
 def conv1x1(in_planes, out_planes, stride=1):
@@ -121,7 +120,8 @@ class ResNet(nn.Module):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                conv1x1(self.inplanes, planes * block.expansion, stride), nn.BatchNorm2d(planes * block.expansion),
+                conv1x1(self.inplanes, planes * block.expansion, stride),
+                nn.BatchNorm2d(planes * block.expansion),
             )
 
         layers = []
@@ -178,10 +178,3 @@ def Backbone_ResNet50(pretrained=True):
     div_32 = net.layer4
 
     return div_2, div_4, div_8, div_16, div_32
-
-
-
-if __name__ == "__main__":
-    div_2, div_4, div_8, div_16, div_32 = Backbone_ResNet50_in1()
-    indata = torch.rand(4, 1, 320, 320)
-    print(div_2)

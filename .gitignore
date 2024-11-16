@@ -1,0 +1,14 @@
+
+# pixi environments
+.pixi
+*.egg-info
+
+data/*
+CIRNet_cpts/*
+
+*.pyc
+*.pth
+
+*.jpg
+*.jpeg
+*.png
