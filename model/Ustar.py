@@ -7,9 +7,9 @@ from module.BaseBlock import BaseConv2d, SpatialAttention
 from module.starIGF import LargeIGF
 
 
-class CIRNet_StarNet(nn.Module):
+class CIRNet_Ustar(nn.Module):
     def __init__(self, norm_layer=nn.BatchNorm2d):
-        super(CIRNet_StarNet, self).__init__()
+        super(CIRNet_Ustar, self).__init__()
 
         # 加载StarNet骨干网
         (
