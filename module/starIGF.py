@@ -43,8 +43,11 @@ class LargeIGF(nn.Module):
             out_channels, out_channels, kernel_size=3, padding=1
         )  # 用于处理融合特征
         self.conv_gate_before = BaseConv2d(
-            out_channels, out_channels, kernel_size=3, padding=1
-        )  # 用于处理前一层特征
+            encoder_channels,  # 这里应该使用与 fea_before 相同的通道数
+            out_channels,
+            kernel_size=3,
+            padding=1,
+        )
         self.conv_reduce = BaseConv2d(out_channels, out_channels, kernel_size=1)  # 降维
         self.ca = ChannelAttention(out_channels)
         self.conv_k = BaseConv2d(out_channels, out_channels, kernel_size=3, padding=1)
@@ -70,12 +73,12 @@ class LargeIGF(nn.Module):
         fea_fuse = self.conv_fuse(fea_fuse)
 
         if fea_before is not None:
-            # p门控计算 - 使用元素乘替代通道拼接
+            # p门控计算
             fea_gate_fuse = self.conv_gate_fuse(fea_fuse)
-            fea_gate_before = self.conv_gate_before(fea_before)
+            fea_before = self.conv_gate_before(fea_before)
 
             # 元素乘融合
-            fea_gate = fea_gate_fuse * fea_gate_before
+            fea_gate = fea_gate_fuse * fea_before
             fea_gate = self.conv_reduce(fea_gate)
 
             # 通道注意力和最终门控
