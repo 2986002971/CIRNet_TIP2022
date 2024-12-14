@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 
@@ -178,3 +179,22 @@ def Backbone_ResNet50(pretrained=True):
     div_32 = net.layer4
 
     return div_2, div_4, div_8, div_16, div_32
+
+
+if __name__ == "__main__":
+    # 使用示例
+    div_2, div_4, div_8, div_16, div_32 = Backbone_ResNet50(pretrained=True)
+
+    # 验证输出
+    x = torch.randn(1, 3, 224, 224)
+    f2 = div_2(x)  # 1/2
+    f4 = div_4(f2)  # 1/4
+    f8 = div_8(f4)  # 1/8
+    f16 = div_16(f8)  # 1/16
+    f32 = div_32(f16)  # 1/32
+
+    print(f"1/2: {f2.shape}")
+    print(f"1/4: {f4.shape}")
+    print(f"1/8: {f8.shape}")
+    print(f"1/16: {f16.shape}")
+    print(f"1/32: {f32.shape}")

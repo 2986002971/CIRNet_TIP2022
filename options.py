@@ -18,7 +18,10 @@ parser.add_argument(
 parser.add_argument("--load", type=str, default=None, help="train from checkpoints")
 parser.add_argument("--gpu_id", type=str, default="0", help="gpu")
 parser.add_argument(
-    "--backbone", type=str, default="R50", help="backbone networks:R50 or V16"
+    "--backbone",
+    type=str,
+    default="R50",
+    help="backbone networks:R50 or StarNet S4 or V16",
 )
 
 parser.add_argument(

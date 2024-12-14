@@ -10,6 +10,7 @@ from tensorboardX import SummaryWriter
 
 from dataLoader import get_loader
 from model.CIRNet_Res50 import CIRNet_R50
+from model.CIRNet_Star50 import CIRNet_StarNet
 from model.CIRNet_vgg16 import CIRNet_V16
 from options import opt
 
@@ -72,6 +73,8 @@ writer = SummaryWriter(save_path + "summary")
 print("load model...")
 if opt.backbone == "R50":
     model = CIRNet_R50()
+elif opt.backbone == "StarNet":
+    model = CIRNet_StarNet()
 else:
     model = CIRNet_V16()
 print("Use backbone" + opt.backbone)
