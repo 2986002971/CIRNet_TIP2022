@@ -9,6 +9,7 @@ from dataLoader import test_dataset
 from model.CIRNet_Res50 import CIRNet_R50
 from model.CIRNet_Star50 import CIRNet_StarNet
 from model.CIRNet_vgg16 import CIRNet_V16
+from model.Ustar import CIRNet_Ustar
 from options import opt
 
 os.environ["CUDA_VISIBLE_DEVICES"] = opt.gpu_id
@@ -19,6 +20,8 @@ if opt.backbone == "R50":
     model = CIRNet_R50()
 elif opt.backbone == "StarNet":
     model = CIRNet_StarNet()
+elif opt.backbone == "Ustar":
+    model = CIRNet_Ustar()
 else:
     model = CIRNet_V16()
 print("Use backbone" + opt.backbone)

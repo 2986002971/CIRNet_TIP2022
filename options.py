@@ -21,7 +21,7 @@ parser.add_argument(
     "--backbone",
     type=str,
     default="R50",
-    help="backbone networks:R50 or StarNet or V16",
+    help="backbone networks:R50 or StarNet or Ustar or V16",
 )
 
 parser.add_argument(
