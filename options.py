@@ -5,7 +5,7 @@ parser = argparse.ArgumentParser()
 # train settings
 parser.add_argument("--epoch", type=int, default=150, help="epoch number")
 parser.add_argument("--lr", type=float, default=1e-4, help="learning rate")
-parser.add_argument("--batchsize", type=int, default=4, help="training batch size")
+parser.add_argument("--batchsize", type=int, default=16, help="training batch size")
 parser.add_argument("--trainsize", type=int, default=352, help="training image size")
 parser.add_argument("--clip", type=float, default=0.5, help="gradient clipping margin")
 parser.add_argument(
@@ -21,7 +21,7 @@ parser.add_argument(
     "--backbone",
     type=str,
     default="R50",
-    help="backbone networks:R50 or StarNet S4 or V16",
+    help="backbone networks:R50 or StarNet or V16",
 )
 
 parser.add_argument(
