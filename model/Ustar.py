@@ -32,10 +32,16 @@ class CIRNet_Ustar(nn.Module):
         # StarNet的通道数
         channels = [32, 32, 64, 128, 256]
 
-        # PAI单元的卷积层
-        self.conv1 = BaseConv2d(channels[2], channels[2], kernel_size=3, padding=1)
-        self.conv2 = BaseConv2d(channels[3], channels[3], kernel_size=3, padding=1)
-        self.conv3 = BaseConv2d(channels[4], channels[4], kernel_size=3, padding=1)
+        # PAI单元的卷积层 - 注意这里的输入通道数需要改为2倍
+        self.conv1 = BaseConv2d(
+            channels[2] * 2, channels[2], kernel_size=3, padding=1
+        )  # 64*2 -> 64
+        self.conv2 = BaseConv2d(
+            channels[3] * 2, channels[3], kernel_size=3, padding=1
+        )  # 128*2 -> 128
+        self.conv3 = BaseConv2d(
+            channels[4] * 2, channels[4], kernel_size=3, padding=1
+        )  # 256*2 -> 256
 
         # 空间注意力
         self.sa1 = SpatialAttention(kernel_size=7)
@@ -98,9 +104,8 @@ class CIRNet_Ustar(nn.Module):
         conv3_res_r = self.rgb_block3(conv2_res_r)
         conv3_res_d = self.depth_block3(conv2_res_d)
 
-        # 使用元素乘替代通道拼接
-        conv3_rgbd = conv3_res_r * conv3_res_d
-        conv3_rgbd = self.conv1(conv3_rgbd)
+        # 使用通道拼接替代元素乘
+        conv3_rgbd = self.conv1(torch.cat((conv3_res_r, conv3_res_d), dim=1))
         conv3_rgbd = F.interpolate(
             conv3_rgbd, scale_factor=1 / 2, mode="bilinear", align_corners=True
         )
@@ -113,8 +118,7 @@ class CIRNet_Ustar(nn.Module):
         conv4_res_r = self.rgb_block4(conv3_res_r)
         conv4_res_d = self.depth_block4(conv3_res_d)
 
-        conv4_rgbd = conv4_res_r * conv4_res_d
-        conv4_rgbd = self.conv2(conv4_rgbd)
+        conv4_rgbd = self.conv2(torch.cat((conv4_res_r, conv4_res_d), dim=1))
         conv3_rgbd_map_resize = F.interpolate(
             conv3_rgbd_map,
             size=conv4_rgbd.shape[2:],
@@ -131,8 +135,7 @@ class CIRNet_Ustar(nn.Module):
         conv5_res_r = self.rgb_block5(conv4_res_r)
         conv5_res_d = self.depth_block5(conv4_res_d)
 
-        conv5_rgbd = conv5_res_r * conv5_res_d
-        conv5_rgbd = self.conv3(conv5_rgbd)
+        conv5_rgbd = self.conv3(torch.cat((conv5_res_r, conv5_res_d), dim=1))
         conv4_rgbd_map_resize = F.interpolate(
             conv4_rgbd_map,
             size=conv5_rgbd.shape[2:],
