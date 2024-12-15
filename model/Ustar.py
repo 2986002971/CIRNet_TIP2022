@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from backbone.StarNet import Backbone_StarNetS4
 from module.BaseBlock import BaseConv2d, ChannelAttention, SpatialAttention
 from module.cmWR import cmWR
-from module.starIGF import Decoder
+from module.starDecoder import Decoder
 
 
 class CIRNet_Ustar(nn.Module):
@@ -53,7 +53,7 @@ class CIRNet_Ustar(nn.Module):
         self.sa_depth = SpatialAttention(kernel_size=7)
         self.sa_rgbd = SpatialAttention(kernel_size=7)
 
-        # 添加cross-modality weighting refinement��块
+        # 添加cross-modality weighting refinement块
         self.cmWR = cmWR(channels[4], squeeze_ratio=1)
 
         # 添加卷积层
