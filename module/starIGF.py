@@ -64,8 +64,8 @@ class LargeIGF(nn.Module):
 
         # 融合流
         fea_fuse = fea_r * fea_d
-        # # 大残差连接，待定
-        # fea_fuse = fea_fuse + enc_r + dec_r + enc_d + dec_d
+        # 大残差连接，待定
+        fea_fuse = fea_fuse + enc_r + dec_r + enc_d + dec_d
         fea_fuse = self.star_fuse(fea_fuse)
 
         if fea_before is not None:
