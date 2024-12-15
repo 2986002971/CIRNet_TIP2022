@@ -9,7 +9,7 @@ from module.BaseBlock import BaseConv2d, ChannelAttention
 class RorD_Decoder(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(RorD_Decoder, self).__init__()
-        self.star_block = Block(in_channels * 2, mlp_ratio=3)
+        self.star_block = Block(in_channels * 2, mlp_ratio=3, drop_path=0.1)
         self.conv_adjust = BaseConv2d(in_channels * 2, out_channels, kernel_size=1)
 
     def forward(self, fea_before, fea_vgg):
@@ -24,18 +24,18 @@ class IGF(nn.Module):
         super(IGF, self).__init__()
         self.up = up
 
-        self.star_rd = Block(fea_rd_channels * 2, mlp_ratio=3)
+        self.star_rd = Block(fea_rd_channels * 2, mlp_ratio=3, drop_path=0.1)
         self.conv_rd = BaseConv2d(fea_rd_channels * 2, out_channels, kernel_size=1)
 
-        self.star_before = Block(fea_before_channels, mlp_ratio=3)
+        self.star_before = Block(fea_before_channels, mlp_ratio=3, drop_path=0.1)
         self.conv_before = BaseConv2d(fea_before_channels, out_channels, kernel_size=1)
 
         self.conv_reduce = BaseConv2d(out_channels * 2, out_channels, kernel_size=1)
         self.ca = ChannelAttention(out_channels)
         self.conv_k = BaseConv2d(out_channels, out_channels, kernel_size=3, padding=1)
 
-        self.star_final1 = Block(out_channels, mlp_ratio=3)
-        self.star_final2 = Block(out_channels, mlp_ratio=3)
+        self.star_final1 = Block(out_channels, mlp_ratio=3, drop_path=0.15)
+        self.star_final2 = Block(out_channels, mlp_ratio=3, drop_path=0.2)
 
     def forward(self, fea_before, fea_r, fea_d):
         fea_rd = self.star_rd(torch.cat((fea_r, fea_d), dim=1))
