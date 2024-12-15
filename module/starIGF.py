@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from backbone.StarNet import Block
 from module.BaseBlock import BaseConv2d, ChannelAttention
 
 
@@ -10,50 +11,44 @@ class LargeIGF(nn.Module):
         super().__init__()
         self.up = up
 
-        # 特征转换层
-        self.conv_enc_r = BaseConv2d(
-            encoder_channels, out_channels, kernel_size=3, padding=1
-        )
-        self.conv_dec_r = BaseConv2d(
-            decoder_channels, out_channels, kernel_size=3, padding=1
-        )
-        self.conv_enc_d = BaseConv2d(
-            encoder_channels, out_channels, kernel_size=3, padding=1
-        )
-        self.conv_dec_d = BaseConv2d(
-            decoder_channels, out_channels, kernel_size=3, padding=1
-        )
+        # 特征转换层 - 使用Star Block替换普通卷积
+        self.star_enc_r = Block(encoder_channels, mlp_ratio=3)
+        self.star_dec_r = Block(decoder_channels, mlp_ratio=3)
+        self.star_enc_d = Block(encoder_channels, mlp_ratio=3)
+        self.star_dec_d = Block(decoder_channels, mlp_ratio=3)
 
-        # RGB和深度分支的融合层
-        self.conv_r_fuse = BaseConv2d(
-            out_channels, out_channels, kernel_size=3, padding=1
-        )
-        self.conv_d_fuse = BaseConv2d(
-            out_channels, out_channels, kernel_size=3, padding=1
-        )
+        # 通道调整层(在Star Block之后用于调整通道数)
+        self.conv_enc_r = BaseConv2d(encoder_channels, out_channels, kernel_size=1)
+        self.conv_dec_r = BaseConv2d(decoder_channels, out_channels, kernel_size=1)
+        self.conv_enc_d = BaseConv2d(encoder_channels, out_channels, kernel_size=1)
+        self.conv_dec_d = BaseConv2d(decoder_channels, out_channels, kernel_size=1)
 
-        # 跨模态融合层
-        self.conv_fuse = BaseConv2d(
-            out_channels, out_channels, kernel_size=3, padding=1
-        )
-        self.conv_reduce = BaseConv2d(out_channels, out_channels, kernel_size=1)
+        # RGB和深度分支的融合层 - 使用Star Block
+        self.star_r_fuse = Block(out_channels, mlp_ratio=3)
+        self.star_d_fuse = Block(out_channels, mlp_ratio=3)
+
+        # 跨模态融合层 - 使用Star Block
+        self.star_fuse = Block(out_channels, mlp_ratio=3)
 
         # p门控相关层
         self.conv_gate_fuse = BaseConv2d(
             out_channels, out_channels, kernel_size=3, padding=1
-        )  # 用于处理融合特征
-        self.conv_gate_before = BaseConv2d(
-            encoder_channels,  # 这里应该使用与 fea_before 相同的通道数
-            out_channels,
-            kernel_size=3,
-            padding=1,
         )
-        self.conv_reduce = BaseConv2d(out_channels, out_channels, kernel_size=1)  # 降维
+        self.conv_gate_before = BaseConv2d(
+            encoder_channels, out_channels, kernel_size=3, padding=1
+        )
+        self.conv_reduce = BaseConv2d(out_channels, out_channels, kernel_size=1)
         self.ca = ChannelAttention(out_channels)
         self.conv_k = BaseConv2d(out_channels, out_channels, kernel_size=3, padding=1)
 
     def forward(self, enc_r, dec_r, enc_d, dec_d, fea_before=None):
-        # 特征转换
+        # 特征转换 - 先通过Star Block增强特征
+        enc_r = self.star_enc_r(enc_r)
+        dec_r = self.star_dec_r(dec_r)
+        enc_d = self.star_enc_d(enc_d)
+        dec_d = self.star_dec_d(dec_d)
+
+        # 调整通道数
         enc_r = self.conv_enc_r(enc_r)
         dec_r = self.conv_dec_r(dec_r)
         enc_d = self.conv_enc_d(enc_d)
@@ -61,21 +56,24 @@ class LargeIGF(nn.Module):
 
         # RGB流
         fea_r = enc_r * dec_r
-        rgb_out = self.conv_r_fuse(fea_r)
+        rgb_out = self.star_r_fuse(fea_r)
 
         # 深度流
         fea_d = enc_d * dec_d
-        depth_out = self.conv_d_fuse(fea_d)
+        depth_out = self.star_d_fuse(fea_d)
 
         # 融合流
         fea_fuse = fea_r * fea_d
-        fea_fuse = fea_fuse + enc_r + dec_r + enc_d + dec_d
-        fea_fuse = self.conv_fuse(fea_fuse)
+        # # 大残差连接，待定
+        # fea_fuse = fea_fuse + enc_r + dec_r + enc_d + dec_d
+        fea_fuse = self.star_fuse(fea_fuse)
 
         if fea_before is not None:
+            # 先将fea_before转换到正确的通道数
+            fea_before = self.conv_gate_before(fea_before)
+
             # p门控计算
             fea_gate_fuse = self.conv_gate_fuse(fea_fuse)
-            fea_before = self.conv_gate_before(fea_before)
 
             # 元素乘融合
             fea_gate = fea_gate_fuse * fea_before
