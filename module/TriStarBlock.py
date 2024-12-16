@@ -29,19 +29,29 @@ class TriStar(nn.Module):
         # RGBD融合
         self.rgbd_fusion = FusionBlock(in_channels)
 
-        # 如果需要调整输出通道
+        # 如果需要调整输出通道(用于长程残差)
         if self.out_channels != in_channels:
+            self.rgb_res_conv = nn.Conv2d(in_channels, self.out_channels, 1)
+            self.depth_res_conv = nn.Conv2d(in_channels, self.out_channels, 1)
             self.out_conv = nn.Conv2d(in_channels, self.out_channels, 1)
 
     def forward(self, rgb, depth, rgbd=None):
+        # 保存输入用于长程残差
+        rgb_res = rgb
+        depth_res = depth
+
         # 1. 先融合RGB-Depth
         rd_fused = self.rd_fusion(rgb, depth)
 
         # 如果没有rgbd输入,直接返回rd_fused
         if rgbd is None:
             if hasattr(self, "out_conv"):
-                return self.out_conv(rd_fused)
-            return rd_fused
+                # 添加长程残差
+                rd_fused = self.out_conv(rd_fused)
+                rgb_res = self.rgb_res_conv(rgb_res)
+                depth_res = self.depth_res_conv(depth_res)
+                return rd_fused + rgb_res + depth_res
+            return rd_fused + rgb + depth  # 通道数相同时直接相加
 
         # 2. 处理RGBD的通道数
         if hasattr(self, "rgbd_conv"):
@@ -59,8 +69,11 @@ class TriStar(nn.Module):
         # 4. 最终融合
         out = self.rgbd_fusion(rd_fused, rgbd)
 
-        # 5. 调整输出通道
+        # 5. 调整输出通道并添加长程残差
         if hasattr(self, "out_conv"):
             out = self.out_conv(out)
+            rgb_res = self.rgb_res_conv(rgb_res)
+            depth_res = self.depth_res_conv(depth_res)
+            return out + rgb_res + depth_res
 
-        return out
+        return out + rgb + depth  # 通道数相同时直接相加
