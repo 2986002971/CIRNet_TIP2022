@@ -104,7 +104,7 @@ class CIRNet_Ustar(nn.Module):
         conv3_res_r = self.rgb_block3(conv2_res_r)
         conv3_res_d = self.depth_block3(conv2_res_d)
 
-        # 使用通道拼接替代元素乘
+        # 使用通道拼接
         conv3_rgbd = self.conv1(torch.cat((conv3_res_r, conv3_res_d), dim=1))
         conv3_rgbd = F.interpolate(
             conv3_rgbd, scale_factor=1 / 2, mode="bilinear", align_corners=True

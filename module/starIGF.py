@@ -68,6 +68,11 @@ class LargeIGF(nn.Module):
             encoder_channels, encoder_channels, kernel_size=3, padding=1
         )
 
+        # 输出通道调整层
+        self.conv_out_r = ConvBN(encoder_channels, out_channels, 1)
+        self.conv_out_d = ConvBN(encoder_channels, out_channels, 1)
+        self.conv_out_fuse = ConvBN(encoder_channels, out_channels, 1)
+
     def forward(self, enc_r, dec_r, enc_d, dec_d, fea_before=None):
         # 特征转换
         enc_r = self.star_enc_r(enc_r)
@@ -112,6 +117,11 @@ class LargeIGF(nn.Module):
             fea_fuse = F.interpolate(
                 fea_fuse, scale_factor=2, mode="bilinear", align_corners=True
             )
+
+        # 调整输出通道数
+        rgb_out = self.conv_out_r(rgb_out)
+        depth_out = self.conv_out_d(depth_out)
+        fea_fuse = self.conv_out_fuse(fea_fuse)
 
         return rgb_out, depth_out, fea_fuse
 

@@ -3,7 +3,7 @@ import argparse
 parser = argparse.ArgumentParser()
 
 # train settings
-parser.add_argument("--epoch", type=int, default=150, help="epoch number")
+parser.add_argument("--epoch", type=int, default=300, help="epoch number")
 parser.add_argument("--lr", type=float, default=1e-4, help="learning rate")
 parser.add_argument("--batchsize", type=int, default=16, help="training batch size")
 parser.add_argument("--trainsize", type=int, default=352, help="training image size")
