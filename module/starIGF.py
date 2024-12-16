@@ -46,10 +46,16 @@ class LargeIGF(nn.Module):
         self.star_enc_d = Block(encoder_channels, mlp_ratio=3)
         self.star_dec_d = Block(decoder_channels, mlp_ratio=3)
 
-        # 特征融合模块
+        # 特征融合模块 + Star Block增强
         self.rgb_fusion = FusionBlock(encoder_channels)
+        self.rgb_enhance = Block(encoder_channels, mlp_ratio=3)
+
         self.depth_fusion = FusionBlock(encoder_channels)
+        self.depth_enhance = Block(encoder_channels, mlp_ratio=3)
+
         self.cross_fusion = FusionBlock(encoder_channels)
+        self.cross_enhance = Block(encoder_channels, mlp_ratio=3)
+
         self.gate_fusion = FusionBlock(encoder_channels)
 
         # p门控相关层
@@ -69,14 +75,17 @@ class LargeIGF(nn.Module):
         enc_d = self.star_enc_d(enc_d)
         dec_d = self.star_dec_d(dec_d)
 
-        # RGB流融合
+        # RGB流融合 + 增强
         rgb_out = self.rgb_fusion(enc_r, dec_r)
+        rgb_out = self.rgb_enhance(rgb_out)
 
-        # 深度流融合
+        # 深度流融合 + 增强
         depth_out = self.depth_fusion(enc_d, dec_d)
+        depth_out = self.depth_enhance(depth_out)
 
-        # RGB和深度的跨模态融合
+        # RGB和深度的跨模态融合 + 增强
         fea_fuse = self.cross_fusion(rgb_out, depth_out)
+        fea_fuse = self.cross_enhance(fea_fuse)
 
         if fea_before is not None:
             # p门控计算
