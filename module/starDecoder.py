@@ -34,8 +34,8 @@ class IGF(nn.Module):
         self.ca = ChannelAttention(out_channels)
         self.conv_k = BaseConv2d(out_channels, out_channels, kernel_size=3, padding=1)
 
-        self.star_final1 = Block(out_channels, mlp_ratio=3, drop_path=0.15)
-        self.star_final2 = Block(out_channels, mlp_ratio=3, drop_path=0.2)
+        self.star_final1 = Block(out_channels, mlp_ratio=3, drop_path=0.1)
+        self.star_final2 = Block(out_channels, mlp_ratio=3, drop_path=0.1)
 
     def forward(self, fea_before, fea_r, fea_d):
         fea_rd = self.star_rd(torch.cat((fea_r, fea_d), dim=1))
