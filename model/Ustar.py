@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from backbone.StarNet import Backbone_StarNetS4
 from module.BaseBlock import BaseConv2d, ChannelAttention, SpatialAttention
 from module.cmWR import cmWR
-from module.starDecoder import Decoder
+from module.starIGF import Decoder
 
 
 class CIRNet_Ustar(nn.Module):
