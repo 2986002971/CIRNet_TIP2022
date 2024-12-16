@@ -20,8 +20,8 @@ parser.add_argument("--gpu_id", type=str, default="0", help="gpu")
 parser.add_argument(
     "--backbone",
     type=str,
-    default="R50",
-    help="backbone networks:R50 or StarNet or Ustar or V16",
+    default="Ustar",
+    help="backbone networks",
 )
 
 parser.add_argument(

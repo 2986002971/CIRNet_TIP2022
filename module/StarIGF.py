@@ -1,38 +1,9 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from backbone.StarNet import Block, ConvBN
-from module.BaseBlock import BaseConv2d, ChannelAttention
-
-
-class FusionBlock(nn.Module):
-    def __init__(self, dim, mlp_ratio=3):
-        super().__init__()
-        # 升维层
-        self.f1_stream1 = ConvBN(dim, mlp_ratio * dim, 1)
-        self.f1_stream2 = ConvBN(dim, mlp_ratio * dim, 1)
-
-        # 降维层
-        self.g = ConvBN(mlp_ratio * dim, dim, 1)
-
-        self.act = nn.ReLU6()
-
-    def forward(self, stream1, stream2):
-        # 保存输入用于残差连接
-        identity = stream1
-
-        # 升维
-        s1_high = self.f1_stream1(stream1)
-        s2_high = self.f1_stream2(stream2)
-
-        # 高维空间中的元素乘法
-        out = self.act(s1_high) * s2_high
-
-        # 降维+残差连接
-        out = self.g(out) + identity
-
-        return out
+from module.BaseBlock import ConvBN
+from module.FusionBlock import FusionBlock
+from module.StarBlock import Block
 
 
 class LargeIGF(nn.Module):
@@ -56,17 +27,8 @@ class LargeIGF(nn.Module):
         self.cross_fusion = FusionBlock(encoder_channels)
         self.cross_enhance = Block(encoder_channels, mlp_ratio=3)
 
-        self.gate_fusion = FusionBlock(encoder_channels)
-
-        # p门控相关层
-        self.conv_gate_fuse = BaseConv2d(
-            encoder_channels, encoder_channels, kernel_size=3, padding=1
-        )
-        self.conv_reduce = BaseConv2d(encoder_channels, encoder_channels, kernel_size=1)
-        self.ca = ChannelAttention(encoder_channels)
-        self.conv_k = BaseConv2d(
-            encoder_channels, encoder_channels, kernel_size=3, padding=1
-        )
+        # 使用FusionBlock替代原来的门控机制
+        self.temporal_fusion = FusionBlock(encoder_channels)
 
         # 输出通道调整层
         self.conv_out_r = ConvBN(encoder_channels, out_channels, 1)
@@ -92,20 +54,9 @@ class LargeIGF(nn.Module):
         fea_fuse = self.cross_fusion(rgb_out, depth_out)
         fea_fuse = self.cross_enhance(fea_fuse)
 
+        # 时序特征融合
         if fea_before is not None:
-            # p门控计算
-            fea_gate_fuse = self.conv_gate_fuse(fea_fuse)
-
-            # 使用FusionBlock进行门控融合
-            fea_gate = self.gate_fusion(fea_gate_fuse, fea_before)
-            fea_gate = self.conv_reduce(fea_gate)
-
-            # 通道注意力和最终门控
-            fea_gate_ca = fea_gate.mul(self.ca(fea_gate)) + fea_gate
-            p_block = torch.sigmoid(self.conv_k(fea_gate_ca))
-
-            # 门控融合
-            fea_fuse = fea_fuse * p_block + fea_before * (1 - p_block)
+            fea_fuse = self.temporal_fusion(fea_fuse, fea_before)
 
         if self.up:
             rgb_out = F.interpolate(
