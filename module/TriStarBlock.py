@@ -24,12 +24,8 @@ class TriStar(nn.Module):
         self.f1_rgb = ConvBN(in_channels, mlp_ratio * in_channels, 1)
         self.f1_depth = ConvBN(in_channels, mlp_ratio * in_channels, 1)
 
-        # 如果rgbd通道数不同,需要调整通道
-        if self.rgbd_in_channels != in_channels:
-            self.rgbd_conv = ConvBN(self.rgbd_in_channels, in_channels, 1)
-
-        # RGBD融合的升维层
-        self.f2_rgbd = ConvBN(in_channels, mlp_ratio * in_channels, 1)
+        # RGBD直接升维到目标维度
+        self.f2_rgbd = ConvBN(self.rgbd_in_channels, mlp_ratio * in_channels, 1)
 
         # 最终的降维层
         if self.out_channels != in_channels:
@@ -60,21 +56,17 @@ class TriStar(nn.Module):
                 return rd_fused + rgb_res + depth_res
             return rd_fused + rgb + depth
 
-        # 2. 处理RGBD的通道数
-        if hasattr(self, "rgbd_conv"):
-            rgbd = self.rgbd_conv(rgbd)
-
-        # 3. 如果需要,将rgbd的尺寸调整为与rgb/depth一致
+        # 2. 如果需要,将rgbd的尺寸调整为与rgb/depth一致
         if self.resize_rgbd:
             rgbd = F.interpolate(
                 rgbd, size=rgb.shape[2:], mode="bilinear", align_corners=True
             )
 
-        # 4. RGBD融合(在高维空间)
+        # 3. RGBD融合(在高维空间)
         rgbd_high = self.f2_rgbd(rgbd)
         out = self.g(self.act(rd_high) * rgbd_high)
 
-        # 5. 添加长程残差
+        # 4. 添加长程残差
         if hasattr(self, "rgb_res_conv"):
             rgb_res = self.rgb_res_conv(rgb_res)
             depth_res = self.depth_res_conv(depth_res)
