@@ -26,7 +26,8 @@ class FusionBlock(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
-        self.act = nn.ReLU6()
+        # self.act = nn.ReLU6()
+        self.act = nn.Identity()
 
     def forward(self, stream1, stream2):
         # 保存输入用于残差连接

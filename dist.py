@@ -65,4 +65,7 @@ model_with_relu6.load_state_dict(torch.load("path/to/model_with_relu6.pth"))
 
 distributions_with_relu6 = analyze_tristar_weights(model_with_relu6)
 
+# 保存图表为图片
 fig1 = plot_distributions(distributions_with_relu6)
+fig1.savefig("weight_distributions_with_relu6.png")
+plt.close(fig1)  # 记得关闭图表释放内存

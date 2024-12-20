@@ -29,7 +29,8 @@ class Block(nn.Module):
         self.f2 = ConvBN(dim, mlp_ratio * dim, 1, with_bn=False)
         self.g = ConvBN(mlp_ratio * dim, dim, 1, with_bn=True)
         self.dwconv2 = ConvBN(dim, dim, 7, 1, (7 - 1) // 2, groups=dim, with_bn=False)
-        self.act = nn.ReLU6()
+        # self.act = nn.ReLU6()
+        self.act = nn.Identity()
         self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
 
     def forward(self, x):

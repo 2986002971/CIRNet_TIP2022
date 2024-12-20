@@ -35,7 +35,8 @@ class TriStar(nn.Module):
         else:
             self.g = ConvBN(mlp_ratio * in_channels, in_channels, 1)
 
-        self.act = nn.ReLU6()
+        # self.act = nn.ReLU6()
+        self.act = nn.Identity()
 
     def forward(self, rgb, depth, rgbd=None):
         # 保存输入用于长程残差
